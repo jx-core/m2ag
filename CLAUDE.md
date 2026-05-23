@@ -5,10 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project State
 
 M²AG is an academic Model-Driven Engineering (MDE) project that generates executable
-microservice systems from abstract architectural models. **MVP phases 1–9 (CDC §15) are
-implemented and verified** — both reference models (`ecommerce.xmi`, `banking.xmi`) run
-end-to-end and produce a full `generated/` artifact set. Out-of-scope items (CDC §16,
-visualization / Theia extension / Kubernetes / Kafka) are not started.
+microservice systems from abstract architectural models. **MVP phases 1–9 (CDC §15)
+and phase 10 (React Flow visualizer) are implemented and verified** — both reference
+models (`ecommerce.xmi`, `banking.xmi`) run end-to-end and produce a full `generated/`
+artifact set, and the visualizer in [visualization/](visualization/) renders the model
+graph in the browser. Phase 11 (Theia extension) and the rest of CDC §16 (Kubernetes /
+Kafka / etc.) are not started.
 
 The thesis framing for all decisions: *"We transform abstract architectural models into
 executable distributed systems — not code, models."*
@@ -96,6 +98,15 @@ mvn exec:java -Dexec.args="models/banking.xmi"      # run on the second referenc
 Output goes to `models/<name>-deployment.xmi` (the ATL stage's M2M result) and
 `generated/{docker,services,openapi,traceability.json}`. Both are gitignored —
 they are reproducible from the source models.
+
+The visualizer is a separate Vite + React subproject under `visualization/`:
+
+```bash
+cd visualization && npm install && npm run dev    # http://localhost:5173
+```
+
+It parses XMI client-side (DOMParser, no derived JSON) so the view stays a thin
+projection of the M1 model. `visualization/{node_modules,dist}/` are gitignored.
 
 ## Toolchain Workflow
 

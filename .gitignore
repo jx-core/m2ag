@@ -18,5 +18,10 @@ generated/
 .settings/
 bin/
 
-# Claude Code session-local backups
-.claude/.edit-baks/
+# Visualization (Vite) build/install output
+visualization/node_modules/
+visualization/dist/
+
+# Claude Code session-local backups (the hook resolves cwd-relative, so match
+# at any depth)
+**/.claude/.edit-baks/

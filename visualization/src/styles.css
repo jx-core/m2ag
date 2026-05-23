@@ -1,0 +1,146 @@
+:root {
+    --bg: #0f172a;
+    --bg-panel: #1e293b;
+    --fg: #e2e8f0;
+    --muted: #94a3b8;
+    --service: #3b82f6;
+    --database: #10b981;
+    --broker: #f59e0b;
+    --border: #334155;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body,
+html,
+#root {
+    margin: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+}
+
+.layout {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    padding: 10px 16px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.topbar .sep {
+    color: var(--muted);
+}
+
+.topbar .muted {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.topbar select {
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 13px;
+}
+
+.canvas {
+    flex: 1;
+    min-height: 0;
+}
+
+.node {
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 180px;
+    color: white;
+    font-size: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.node.service {
+    background: var(--service);
+}
+
+.node.database {
+    background: var(--database);
+}
+
+.node.broker {
+    background: var(--broker);
+}
+
+.node .title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.node .meta {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.endpoint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 11px;
+}
+
+.method {
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.35);
+    min-width: 44px;
+    text-align: center;
+}
+
+.m-POST {
+    background: #16a34a;
+}
+.m-PUT {
+    background: #ca8a04;
+}
+.m-DELETE {
+    background: #dc2626;
+}
+.m-PATCH {
+    background: #7c3aed;
+}
+
+.path {
+    flex: 1;
+}
+
+.auth {
+    font-size: 10px;
+}
+
+.react-flow__edge-text {
+    font-size: 10px;
+    font-weight: 600;
+    fill: var(--fg);
+}
+
+.react-flow__edge-textbg {
+    fill: var(--bg-panel);
+}

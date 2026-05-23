@@ -42,6 +42,7 @@ ecommerce-deployment.xmi                   (M1 — runtime topology)
 | [transformations/architecture2deployment.atl](transformations/architecture2deployment.atl) | M2M | Architecture → deployment topology (CDC §7) |
 | [generators/acceleo/](generators/acceleo/) | M2T | DockerCompose, SpringBootService, OpenAPI templates (CDC §8) |
 | [src/main/java/mg/codel/m2ag/](src/main/java/mg/codel/m2ag/) | Java | Pipeline orchestrator, validation, EMF-based mirrors of ATL/Acceleo |
+| [visualization/](visualization/) | UI | React Flow architecture visualizer (CDC phase 10) |
 | `generated/` | M0 | Output (gitignored — reproducible via `mvn exec:java`) |
 | [docs/](docs/) | — | CDC and reference documentation |
 
@@ -108,9 +109,26 @@ records the full artifact-to-model map after each run (CDC §9.3).
   uses `EnvironmentVariable`) requires this, even though the §4.1 hierarchy
   sketch omits them.
 
+## Visualization (CDC phase 10)
+
+A small React Flow app in [visualization/](visualization/) renders the
+service / dependency graph directly from an XMI model in the browser. It
+parses the architecture XMI client-side (no derived JSON) so the visualizer
+stays a thin view over the M1 model.
+
+```bash
+cd visualization
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # production bundle in dist/
+```
+
+The model picker switches between `ecommerce.xmi` and `banking.xmi`; nodes
+show services (with their endpoints), databases, and message brokers; edges
+distinguish REST, gRPC, and EVENT protocols and dashed database links.
+
 ## Phase status
 
-All MVP phases 1–9 from CDC §15 are implemented and verified end-to-end on
-both `ecommerce.xmi` and `banking.xmi`. Out-of-scope per CDC §16: React Flow
-visualization (phase 10), Theia extension (phase 11), Kubernetes manifests,
-Kafka modelling.
+MVP phases 1–9 (CDC §15) and phase 10 (visualization) implemented and
+verified. Phase 11 (Theia extension) and the rest of CDC §16 (Kubernetes,
+Kafka, etc.) remain out of scope.
