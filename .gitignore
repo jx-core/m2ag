@@ -1,0 +1,22 @@
+annexes/
+
+# Maven build output
+target/
+
+# M2AG : ATL output (reproducible via `mvn exec:java`)
+models/*-deployment.xmi
+
+# M2AG : M0 generated artifacts (reproducible via `mvn exec:java`)
+generated/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Claude Code session-local backups
+.claude/.edit-baks/

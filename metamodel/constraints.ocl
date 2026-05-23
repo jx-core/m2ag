@@ -1,0 +1,73 @@
+-- =============================================================
+-- M2AG - OCL validation rules (CDC section 6).
+-- Complete OCL document. All 8 rules run before any transformation
+-- is triggered; a failed constraint blocks the pipeline.
+--
+-- Authoring / interactive checking : Eclipse OCL console (Classic
+-- Eclipse Modeling Tools) against models/ecommerce.xmi.
+-- Pipeline-integrated evaluation   : validation/ValidationEngine.java,
+-- whose 8 rule methods are faithful executable counterparts of the
+-- invariants below (each method names the rule it implements).
+-- =============================================================
+
+import 'MicroserviceArchitecture.ecore'
+
+package architecture
+
+-- Rule 1 - Unique service ports.
+-- No two microservices may bind the same host port.
+context Microservice
+inv UniquePort:
+  Microservice.allInstances()
+    ->select(s | s.port = self.port)
+    ->size() = 1
+
+-- Rule 2 - Unique service names.
+-- Prevents silent directory overwrite during generation.
+context Microservice
+inv UniqueServiceName:
+  Microservice.allInstances()->isUnique(s | s.name)
+
+-- Rule 3 - No self-dependency.
+-- A service must not depend, through an interface, on itself.
+context Microservice
+inv NoSelfDependency:
+  not self.dependencies
+    ->collect(d | d.target)
+    ->collect(i | Microservice.allInstances()->select(m | m.providedInterfaces->includes(i)))
+    ->flatten()
+    ->includes(self)
+
+-- Rule 4 - Valid API path format.
+-- Every endpoint path must be rooted at '/'.
+context APIEndpoint
+inv ValidPath:
+  self.path.startsWith('/')
+
+-- Rule 5 - No duplicate API routes per interface.
+-- (path, method) must be unique inside a single interface.
+context ServiceInterface
+inv NoDuplicateRoutes:
+  self.endpoints->isUnique(e | e.path + e.method.toString())
+
+-- Rule 6 - Service has at least one provided interface.
+context Microservice
+inv HasProvidedInterface:
+  self.providedInterfaces->size() >= 1
+
+-- Rule 7 - Database port uniqueness.
+context Database
+inv UniqueDBPort:
+  Database.allInstances()
+    ->select(d | d.port = self.port)
+    ->size() = 1
+
+-- Rule 8 - Dependency target has a valid port.
+-- The service exposing a depended-on interface must define a port > 0.
+context ServiceDependency
+inv TargetHasPort:
+  Microservice.allInstances()
+    ->select(m | m.providedInterfaces->includes(self.target))
+    ->forAll(m | m.port > 0)
+
+endpackage

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  M2AG - M1 layer : concrete architecture model (CDC section 10.1).
+  Conforms to metamodel/MicroserviceArchitecture.ecore.
+  Primary input of the generation pipeline.
+-->
+<arch:SystemArchitecture xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:arch="http://m2ag.codel.mg/architecture/1.0"
+    name="ECommerceSystem" version="1.0">
+
+  <services xmi:id="AuthService" name="AuthService" port="8081" database="AuthDB">
+    <providedInterfaces xmi:id="AuthAPI" name="AuthAPI">
+      <endpoints xmi:id="AuthAPI.login" path="/auth/login" method="POST" authRequired="false"/>
+      <endpoints xmi:id="AuthAPI.register" path="/auth/register" method="POST" authRequired="false"/>
+    </providedInterfaces>
+    <environmentVariables xmi:id="AuthService.env.DB_HOST" key="DB_HOST" value="auth-db"/>
+  </services>
+
+  <services xmi:id="ProductService" name="ProductService" port="8082"
+      database="ProductDB" requiredInterfaces="AuthAPI">
+    <providedInterfaces xmi:id="ProductAPI" name="ProductAPI">
+      <endpoints xmi:id="ProductAPI.list" path="/products" method="GET" authRequired="true"/>
+      <endpoints xmi:id="ProductAPI.create" path="/products" method="POST" authRequired="true"/>
+      <endpoints xmi:id="ProductAPI.get" path="/products/{id}" method="GET" authRequired="false"/>
+    </providedInterfaces>
+    <dependencies xmi:id="ProductService.dep.Auth" target="AuthAPI" protocol="REST"/>
+    <environmentVariables xmi:id="ProductService.env.DB_HOST" key="DB_HOST" value="product-db"/>
+  </services>
+
+  <services xmi:id="PaymentService" name="PaymentService" port="8083"
+      database="PaymentDB" requiredInterfaces="AuthAPI">
+    <providedInterfaces xmi:id="PaymentAPI" name="PaymentAPI">
+      <endpoints xmi:id="PaymentAPI.create" path="/payments" method="POST" authRequired="true"/>
+      <endpoints xmi:id="PaymentAPI.get" path="/payments/{id}" method="GET" authRequired="true"/>
+    </providedInterfaces>
+    <dependencies xmi:id="PaymentService.dep.Auth" target="AuthAPI" protocol="REST"/>
+    <environmentVariables xmi:id="PaymentService.env.DB_HOST" key="DB_HOST" value="payment-db"/>
+  </services>
+
+  <databases xmi:id="AuthDB" type="POSTGRESQL" host="localhost" port="5432"/>
+  <databases xmi:id="ProductDB" type="POSTGRESQL" host="localhost" port="5433"/>
+  <databases xmi:id="PaymentDB" type="POSTGRESQL" host="localhost" port="5434"/>
+
+</arch:SystemArchitecture>

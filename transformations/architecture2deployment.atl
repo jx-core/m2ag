@@ -1,0 +1,102 @@
+-- =============================================================
+-- M2AG - M2M transformation T1 (CDC section 7.1).
+-- architecture2deployment.atl
+--
+-- Maps a logical MicroserviceArchitecture (M1) model to a runtime
+-- Deployment topology (M1) model. This is the academically correct
+-- first step: M2M before M2T. Acceleo DockerCompose.mtl generates
+-- from the Deployment model produced here, never directly from the
+-- architecture model.
+--
+-- Run in Classic Eclipse (ATL plugin) or via the EMFTVM runtime
+-- invoked by pipeline/GenerationPipeline.java.
+--   IN  metamodel : MicroserviceArchitecture.ecore
+--   OUT metamodel : Deployment.ecore
+-- =============================================================
+module architecture2deployment;
+create OUT : Deployment from IN : MicroserviceArchitecture;
+
+-- DBType -> Docker image mapping (CDC section 5.2).
+helper def: resolveImage(t : MicroserviceArchitecture!DBType) : String =
+  if t = #POSTGRESQL then 'postgres:15-alpine'
+  else if t = #MYSQL then 'mysql:8.0'
+  else if t = #MONGODB then 'mongo:6.0'
+  else if t = #REDIS then 'redis:7-alpine'
+  else 'unknown'
+  endif endif endif endif;
+
+-- The microservice that exposes a given ServiceInterface.
+helper context MicroserviceArchitecture!ServiceInterface
+    def: owningService : MicroserviceArchitecture!Microservice =
+  MicroserviceArchitecture!Microservice.allInstances()
+    ->select(m | m.providedInterfaces->includes(self))
+    ->first();
+
+-- The microservice that declares a given ServiceDependency.
+helper context MicroserviceArchitecture!ServiceDependency
+    def: sourceService : MicroserviceArchitecture!Microservice =
+  MicroserviceArchitecture!Microservice.allInstances()
+    ->select(m | m.dependencies->includes(self))
+    ->first();
+
+-- Root rule : SystemArchitecture -> DeploymentTopology.
+-- services and databases resolve to Containers; dependencies to NetworkLinks.
+rule SystemArchitectureToTopology {
+  from a : MicroserviceArchitecture!SystemArchitecture
+  to t : Deployment!DeploymentTopology (
+    containers <- a.services->union(a.databases),
+    networks <- a.services->collect(s | s.dependencies)->flatten()
+  )
+}
+
+-- Microservice -> Container (built from source via buildContext).
+rule MicroserviceToContainer {
+  from s : MicroserviceArchitecture!Microservice
+  to c : Deployment!Container (
+    name <- s.name,
+    buildContext <- '../services/' + s.name,
+    portBindings <- if s.port > 0
+                    then Sequence {thisModule.makePortBinding(s.port)}
+                    else Sequence {}
+                    endif,
+    envBindings <- s.environmentVariables,
+    dependsOn <- s.dependencies->collect(d | d.target.owningService)
+  )
+}
+
+-- Database -> Container (pulled from a resolved Docker image).
+rule DatabaseToContainer {
+  from db : MicroserviceArchitecture!Database
+  to c : Deployment!Container (
+    name <- db.type.toString().toLower() + '-' + db.port.toString(),
+    image <- thisModule.resolveImage(db.type),
+    portBindings <- Sequence {thisModule.makePortBinding(db.port)}
+  )
+}
+
+-- EnvironmentVariable -> EnvironmentBinding.
+rule EnvironmentVariableToBinding {
+  from ev : MicroserviceArchitecture!EnvironmentVariable
+  to eb : Deployment!EnvironmentBinding (
+    key <- ev.key,
+    value <- ev.value
+  )
+}
+
+-- ServiceDependency -> NetworkLink (source/target resolve to Containers).
+rule ServiceDependencyToNetworkLink {
+  from d : MicroserviceArchitecture!ServiceDependency
+  to nl : Deployment!NetworkLink (
+    source <- d.sourceService,
+    target <- d.target.owningService
+  )
+}
+
+-- Called rule : build a symmetric PortBinding from a port number.
+rule makePortBinding(p : Integer) {
+  to pb : Deployment!PortBinding (
+    hostPort <- p,
+    containerPort <- p
+  )
+  do { pb; }
+}

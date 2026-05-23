@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  M2AG - M2 layer : runtime Deployment topology metamodel.
+  CDC section 5. Intermediate metamodel: the ATL transformation
+  architecture2deployment.atl maps MicroserviceArchitecture instances to
+  Deployment instances. Acceleo DockerCompose.mtl generates from this metamodel.
+-->
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    name="deployment"
+    nsURI="http://m2ag.codel.mg/deployment/1.0"
+    nsPrefix="deploy">
+
+  <eClassifiers xsi:type="ecore:EClass" name="DeploymentTopology">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="containers" lowerBound="1"
+        upperBound="-1" eType="#//Container" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="networks"
+        upperBound="-1" eType="#//NetworkLink" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="volumes"
+        upperBound="-1" eType="#//Volume" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Container">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="image"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="buildContext"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="portBindings"
+        upperBound="-1" eType="#//PortBinding" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="envBindings"
+        upperBound="-1" eType="#//EnvironmentBinding" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="dependsOn"
+        upperBound="-1" eType="#//Container"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="PortBinding">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="hostPort"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="containerPort"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="EnvironmentBinding">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="key"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="NetworkLink">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="source" lowerBound="1"
+        eType="#//Container"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="target" lowerBound="1"
+        eType="#//Container"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Volume">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="mountPath"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+
+</ecore:EPackage>

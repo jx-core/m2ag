@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  M2AG - M1 layer : optional second architecture model (CDC section 10.2).
+  Conforms to metamodel/MicroserviceArchitecture.ecore.
+  Adds a MessageBroker and an EVENT-protocol dependency to exercise
+  broker modelling.
+-->
+<arch:SystemArchitecture xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:arch="http://m2ag.codel.mg/architecture/1.0"
+    name="BankingSystem" version="1.0">
+
+  <services xmi:id="AccountService" name="AccountService" port="8091" database="AccountDB">
+    <providedInterfaces xmi:id="AccountAPI" name="AccountAPI">
+      <endpoints xmi:id="AccountAPI.open" path="/accounts" method="POST" authRequired="false"/>
+      <endpoints xmi:id="AccountAPI.get" path="/accounts/{id}" method="GET" authRequired="true"/>
+    </providedInterfaces>
+  </services>
+
+  <services xmi:id="TransferService" name="TransferService" port="8092"
+      database="TransferDB" requiredInterfaces="AccountAPI NotificationAPI">
+    <providedInterfaces xmi:id="TransferAPI" name="TransferAPI">
+      <endpoints xmi:id="TransferAPI.create" path="/transfers" method="POST" authRequired="true"/>
+      <endpoints xmi:id="TransferAPI.get" path="/transfers/{id}" method="GET" authRequired="true"/>
+    </providedInterfaces>
+    <dependencies xmi:id="TransferService.dep.Account" target="AccountAPI" protocol="REST"/>
+    <dependencies xmi:id="TransferService.dep.Notification" target="NotificationAPI" protocol="EVENT"/>
+  </services>
+
+  <services xmi:id="NotificationService" name="NotificationService" port="8093">
+    <providedInterfaces xmi:id="NotificationAPI" name="NotificationAPI">
+      <endpoints xmi:id="NotificationAPI.send" path="/notifications" method="POST" authRequired="true"/>
+    </providedInterfaces>
+  </services>
+
+  <databases xmi:id="AccountDB" type="POSTGRESQL" host="localhost" port="5432"/>
+  <databases xmi:id="TransferDB" type="POSTGRESQL" host="localhost" port="5433"/>
+
+  <messageBrokers xmi:id="EventBus" type="KAFKA" port="9092"/>
+
+</arch:SystemArchitecture>

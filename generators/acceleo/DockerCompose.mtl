@@ -1,0 +1,54 @@
+[comment encoding = UTF-8 /]
+[**
+ * M2AG - M2T template (CDC section 8.2).
+ * Generates docker-compose.yml from a runtime Deployment topology.
+ * Input metamodel : Deployment.ecore  (produced by architecture2deployment.atl)
+ * Output          : generated/docker/docker-compose.yml
+ */]
+[module DockerCompose('http://m2ag.codel.mg/deployment/1.0')/]
+
+[template public generateDockerCompose(topology : DeploymentTopology)]
+[comment @main/]
+[file ('docker/docker-compose.yml', false, 'UTF-8')]
+# ============================================================
+# [M2AG-TRACE] Source   : DeploymentTopology
+# [M2AG-TRACE] Template : DockerCompose.mtl
+# DO NOT EDIT - regenerate from the model
+# ============================================================
+version: '3.8'
+
+services:
+[for (c : Container | topology.containers)]
+  [c.name/]:
+[if (c.buildContext.oclIsUndefined() or c.buildContext = '')]
+    image: [c.image/]
+[else]
+    build: [c.buildContext/]
+[/if]
+[if (c.portBindings->notEmpty())]
+    ports:
+[for (pb : PortBinding | c.portBindings)]
+      - "[pb.hostPort/]:[pb.containerPort/]"
+[/for]
+[/if]
+[if (c.envBindings->notEmpty())]
+    environment:
+[for (eb : EnvironmentBinding | c.envBindings)]
+      [eb.key/]: "[eb.value/]"
+[/for]
+[/if]
+[if (c.dependsOn->notEmpty())]
+    depends_on:
+[for (d : Container | c.dependsOn)]
+      - [d.name/]
+[/for]
+[/if]
+    networks:
+      - m2ag-net
+[/for]
+
+networks:
+  m2ag-net:
+    driver: bridge
+[/file]
+[/template]

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  M2AG - M2 layer : logical Microservice Architecture metamodel.
+  CDC section 4. Conforms to Ecore (M3 / MOF via EMF).
+  Acceleo OpenAPI.mtl and SpringBootService.mtl consume M1 instances of this metamodel.
+-->
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    name="architecture"
+    nsURI="http://m2ag.codel.mg/architecture/1.0"
+    nsPrefix="arch">
+
+  <eClassifiers xsi:type="ecore:EClass" name="SystemArchitecture">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="version"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="services" lowerBound="1"
+        upperBound="-1" eType="#//Microservice" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="databases"
+        upperBound="-1" eType="#//Database" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="gateways"
+        upperBound="-1" eType="#//Gateway" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="messageBrokers"
+        upperBound="-1" eType="#//MessageBroker" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Microservice">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="port"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="providedInterfaces"
+        upperBound="-1" eType="#//ServiceInterface" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="requiredInterfaces"
+        upperBound="-1" eType="#//ServiceInterface"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="dependencies"
+        upperBound="-1" eType="#//ServiceDependency" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="database"
+        eType="#//Database"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="environmentVariables"
+        upperBound="-1" eType="#//EnvironmentVariable" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="deploymentConfig"
+        eType="#//DeploymentConfig" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="ServiceInterface">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="endpoints" lowerBound="1"
+        upperBound="-1" eType="#//APIEndpoint" containment="true"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="APIEndpoint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="path"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="method"
+        eType="#//HttpMethod"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="authRequired"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Database">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type"
+        eType="#//DBType"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="host"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="port"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="ServiceDependency">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="target" lowerBound="1"
+        eType="#//ServiceInterface"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="protocol"
+        eType="#//Protocol"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="Gateway">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="port"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="MessageBroker">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type"
+        eType="#//BrokerType"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="port"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="EnvironmentVariable">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="key"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EClass" name="DeploymentConfig">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="replicas"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="memoryLimit"
+        eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EEnum" name="HttpMethod">
+    <eLiterals name="GET"/>
+    <eLiterals name="POST" value="1"/>
+    <eLiterals name="PUT" value="2"/>
+    <eLiterals name="DELETE" value="3"/>
+    <eLiterals name="PATCH" value="4"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EEnum" name="DBType">
+    <eLiterals name="POSTGRESQL"/>
+    <eLiterals name="MYSQL" value="1"/>
+    <eLiterals name="MONGODB" value="2"/>
+    <eLiterals name="REDIS" value="3"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EEnum" name="Protocol">
+    <eLiterals name="REST"/>
+    <eLiterals name="GRPC" value="1"/>
+    <eLiterals name="EVENT" value="2"/>
+  </eClassifiers>
+
+  <eClassifiers xsi:type="ecore:EEnum" name="BrokerType">
+    <eLiterals name="KAFKA"/>
+    <eLiterals name="RABBITMQ" value="1"/>
+  </eClassifiers>
+
+</ecore:EPackage>

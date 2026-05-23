@@ -1,0 +1,66 @@
+[comment encoding = UTF-8 /]
+[**
+ * M2AG - M2T template (CDC section 8.3).
+ * Generates one OpenAPI 3.0 specification per Microservice.
+ * Input metamodel : MicroserviceArchitecture.ecore
+ * Output          : generated/openapi/{name}-openapi.yaml
+ *
+ * Note: API contracts are a logical concern, so this template reads the
+ * architecture model directly (CDC section 8.3), not the Deployment model.
+ */]
+[module OpenAPI('http://m2ag.codel.mg/architecture/1.0')/]
+
+[comment Path-parameter name extracted from a templated path, e.g. /products/{id} -> id /]
+[query public pathParam(p : String) : String =
+  p.substring(p.index('{') + 1, p.index('}') - 1) /]
+
+[template public generateOpenAPI(arch : SystemArchitecture)]
+[comment @main/]
+[for (s : Microservice | arch.services)]
+[file ('openapi/' + s.name + '-openapi.yaml', false, 'UTF-8')]
+# ============================================================
+# [M2AG-TRACE] Source element : Microservice([s.name/])
+# [M2AG-TRACE] Template       : OpenAPI.mtl
+# [M2AG-TRACE] System         : [arch.name/]
+# DO NOT EDIT - regenerate from model
+# ============================================================
+openapi: 3.0.3
+info:
+  title: [s.name/] API
+  version: 1.0.0
+  description: Generated from [arch.name/] by the M2AG pipeline.
+servers:
+  - url: http://localhost:[s.port/]
+paths:
+[for (p : String | s.providedInterfaces.endpoints.path->asSet()->sortedBy(x | x))]
+  [p/]:
+[for (e : APIEndpoint | s.providedInterfaces.endpoints->select(x | x.path = p))]
+    [e.method.toString().toLowerCase()/]:
+      summary: [e.method/] [e.path/]
+      operationId: [e.method.toString().toLowerCase()/][e.path/]
+[if (e.path.contains('{'))]
+      parameters:
+        - name: [pathParam(e.path)/]
+          in: path
+          required: true
+          schema:
+            type: string
+[/if]
+[if (e.authRequired)]
+      security:
+        - bearerAuth: []
+[/if]
+      responses:
+        '200':
+          description: Successful response
+[/for]
+[/for]
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+[/file]
+[/for]
+[/template]

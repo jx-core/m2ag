@@ -1,0 +1,177 @@
+[comment encoding = UTF-8 /]
+[**
+ * M2AG - M2T template (CDC section 8.1).
+ * Generates one Spring Boot + Maven service skeleton per Microservice.
+ * Input metamodel : MicroserviceArchitecture.ecore
+ * Output          : generated/services/{name}/...
+ */]
+[module SpringBootService('http://m2ag.codel.mg/architecture/1.0')/]
+
+[query public pkg(s : Microservice) : String =
+  'mg.codel.m2ag.' + s.name.toLowerCase() /]
+
+[query public pkgPath(s : Microservice) : String =
+  'mg/codel/m2ag/' + s.name.toLowerCase() /]
+
+[query public systemName(s : Microservice) : String =
+  s.eContainer().oclAsType(SystemArchitecture).name /]
+
+[query public artifactId(s : Microservice) : String =
+  s.name.toLowerCase() + '-service' /]
+
+[comment Java handler method name, e.g. /products/{id} GET -> getProductsId /]
+[query public opName(e : APIEndpoint) : String =
+  e.method.toString().toLowerCase()
+  + e.path.tokenize('/{}')->iterate(t : String; acc : String = '' | acc + t.toUpperFirst()) /]
+
+[comment Spring mapping annotation, e.g. GET -> @GetMapping /]
+[query public mappingAnno(e : APIEndpoint) : String =
+  '@' + e.method.toString().toLowerCase().toUpperFirst() + 'Mapping' /]
+
+[template public generateServices(arch : SystemArchitecture)]
+[comment @main/]
+[for (s : Microservice | arch.services)]
+[generatePom(s)/]
+[generateApplication(s)/]
+[generateController(s)/]
+[generateService(s)/]
+[generateProperties(s)/]
+[generateDockerfile(s)/]
+[/for]
+[/template]
+
+[template public generatePom(s : Microservice)]
+[file ('services/' + s.name + '/pom.xml', false, 'UTF-8')]
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [M2AG-TRACE] Source: Microservice([s.name/]) | Template: SpringBootService.mtl -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.4</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>mg.codel.m2ag</groupId>
+  <artifactId>[artifactId(s)/]</artifactId>
+  <version>1.0.0</version>
+  <name>[s.name/]</name>
+  <description>Generated from [systemName(s)/] - M2AG pipeline</description>
+
+  <properties>
+    <java.version>17</java.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+[/file]
+[/template]
+
+[template public generateApplication(s : Microservice)]
+[file ('services/' + s.name + '/src/main/java/' + pkgPath(s) + '/' + s.name + 'Application.java', false, 'UTF-8')]
+// ============================================================
+// [M2AG-TRACE] Source element : Microservice([s.name/])
+// [M2AG-TRACE] Template       : SpringBootService.mtl
+// [M2AG-TRACE] System         : [systemName(s)/]
+// DO NOT EDIT - regenerate from model
+// ============================================================
+package [pkg(s)/];
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class [s.name/]Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run([s.name/]Application.class, args);
+    }
+}
+[/file]
+[/template]
+
+[template public generateController(s : Microservice)]
+[file ('services/' + s.name + '/src/main/java/' + pkgPath(s) + '/controller/' + s.name + 'Controller.java', false, 'UTF-8')]
+// ============================================================
+// [M2AG-TRACE] Source element : Microservice([s.name/])
+// [M2AG-TRACE] Template       : SpringBootService.mtl
+// [M2AG-TRACE] System         : [systemName(s)/]
+// DO NOT EDIT - regenerate from model
+// ============================================================
+package [pkg(s)/].controller;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+public class [s.name/]Controller {
+[for (e : APIEndpoint | s.providedInterfaces.endpoints)]
+
+    // [M2AG-TRACE] APIEndpoint: [e.method/] [e.path/] (authRequired=[e.authRequired/])
+    [mappingAnno(e)/]("[e.path/]")
+    public ResponseEntity<?> [opName(e)/]() {
+        // TODO: implement - generated stub
+        return ResponseEntity.ok().build();
+    }
+[/for]
+}
+[/file]
+[/template]
+
+[template public generateService(s : Microservice)]
+[file ('services/' + s.name + '/src/main/java/' + pkgPath(s) + '/service/' + s.name + 'Service.java', false, 'UTF-8')]
+// ============================================================
+// [M2AG-TRACE] Source element : Microservice([s.name/])
+// [M2AG-TRACE] Template       : SpringBootService.mtl
+// [M2AG-TRACE] System         : [systemName(s)/]
+// DO NOT EDIT - regenerate from model
+// ============================================================
+package [pkg(s)/].service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class [s.name/]Service {
+
+    // [M2AG-TRACE] Business-logic layer for Microservice([s.name/]).
+    // TODO: implement - generated stub
+}
+[/file]
+[/template]
+
+[template public generateProperties(s : Microservice)]
+[file ('services/' + s.name + '/src/main/resources/application.properties', false, 'UTF-8')]
+# [M2AG-TRACE] Source: Microservice([s.name/]) | Template: SpringBootService.mtl
+server.port=[s.port/]
+spring.application.name=[s.name/]
+[/file]
+[/template]
+
+[template public generateDockerfile(s : Microservice)]
+[file ('services/' + s.name + '/Dockerfile', false, 'UTF-8')]
+# [M2AG-TRACE] Source: Microservice([s.name/]) | Template: SpringBootService.mtl
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY target/[artifactId(s)/]-1.0.0.jar app.jar
+EXPOSE [s.port/]
+ENTRYPOINT ["java", "-jar", "app.jar"]
+[/file]
+[/template]
