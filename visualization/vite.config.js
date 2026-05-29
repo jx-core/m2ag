@@ -16,5 +16,9 @@ export default defineConfig({
     fs: {
       allow: [resolve(here, '..')],
     },
+    // Forward API calls to the M2AG web server during `npm run dev`.
+    proxy: {
+      '/api': 'http://localhost:8080',
+    },
   },
 });
