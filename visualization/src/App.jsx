@@ -14,6 +14,7 @@ export default function App() {
     const [xmi, setXmi] = useState('');
     const [running, setRunning] = useState(false);
     const [result, setResult] = useState(null);
+    const [logs, setLogs] = useState([]);
 
     useEffect(() => {
         getModels().then((ms) => {
@@ -51,8 +52,12 @@ export default function App() {
         }
         setRunning(true);
         setResult(null);
+        setLogs([]);
         try {
-            setResult(await runPipeline(selected));
+            const res = await runPipeline(selected, (line) =>
+                setLogs((prev) => [...prev, line]),
+            );
+            setResult(res);
         } catch (e) {
             setResult({ error: e.message });
         } finally {
@@ -91,7 +96,12 @@ export default function App() {
                         <Controls />
                     </ReactFlow>
                 </div>
-                <ResultsPanel result={result} running={running} backendHint={BACKEND_HINT} />
+                <ResultsPanel
+                    result={result}
+                    running={running}
+                    logs={logs}
+                    backendHint={BACKEND_HINT}
+                />
             </div>
         </div>
     );

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.eclipse.emf.ecore.EObject;
@@ -65,28 +66,35 @@ public final class GenerationPipeline {
         }
     }
 
-    /** CLI wrapper: logs each stage and turns an invalid model into a halt. */
+    /** CLI wrapper: streams the log to the console, turns an invalid model into a halt. */
     public void run(Path projectRoot, Path modelFile) throws Exception {
-        System.out.println("=== M2AG generation pipeline ===");
-        System.out.println("input model : " + projectRoot.relativize(modelFile));
-        Outcome outcome = execute(projectRoot, modelFile);
+        Outcome outcome = execute(projectRoot, modelFile, System.out::println);
         if (!outcome.valid()) {
-            outcome.violations().forEach(v -> System.err.println("    " + v));
             throw new PipelineException(outcome.violations().size() + " constraint violation(s)");
         }
-        System.out.println("=== pipeline complete (" + outcome.artifactCount() + " artifacts) ===");
+    }
+
+    /** Convenience overload that logs to {@code System.out}. */
+    public Outcome execute(Path projectRoot, Path modelFile) throws Exception {
+        return execute(projectRoot, modelFile, System.out::println);
     }
 
     /**
      * Runs the full pipeline and returns a structured {@link Outcome} without
-     * throwing on validation failure or calling {@code System.exit}. Always
-     * writes {@code generated/validation-report.json}; on a valid model it also
-     * writes the deployment XMI, all M2T artifacts, and {@code traceability.json}.
+     * throwing on validation failure or calling {@code System.exit}. Every
+     * stage and every generated artifact is reported to {@code log} (the CLI
+     * passes {@code System.out::println}; the web server streams it live to the
+     * browser). Always writes {@code generated/validation-report.json}; on a
+     * valid model it also writes the deployment XMI, all M2T artifacts, and
+     * {@code traceability.json}.
      */
-    public Outcome execute(Path projectRoot, Path modelFile) throws Exception {
+    public Outcome execute(Path projectRoot, Path modelFile, Consumer<String> log) throws Exception {
         Path metamodelDir = projectRoot.resolve("metamodel");
         Path modelsDir = projectRoot.resolve("models");
         Path generatedDir = projectRoot.resolve("generated");
+
+        log.accept("=== M2AG generation pipeline ===");
+        log.accept("input model : " + projectRoot.relativize(modelFile));
 
         // 1. Load the M2 metamodels and the M1 model instance.
         ModelLoader loader = new ModelLoader();
@@ -94,8 +102,7 @@ public final class GenerationPipeline {
         EPackage deploymentMetamodel =
                 loader.registerMetamodel(metamodelDir.resolve("Deployment.ecore"));
         EObject architecture = loader.loadModel(modelFile);
-        System.out.println("[1] loaded    : SystemArchitecture("
-                + Emf.str(architecture, "name") + ")");
+        log.accept("[1] loaded    : SystemArchitecture(" + Emf.str(architecture, "name") + ")");
 
         // 2. OCL validation - report written whether it passes or fails. The
         //    output directory is cleared first so results reflect only this run.
@@ -104,11 +111,13 @@ public final class GenerationPipeline {
         ValidationResult validation = new ValidationEngine(architecture).validate();
         Files.writeString(generatedDir.resolve("validation-report.json"), validation.toJson());
         if (!validation.isValid()) {
-            System.out.println("[2] validated : FAIL ("
-                    + validation.getViolations().size() + " violations) - halting");
+            log.accept("[2] validated : FAIL - " + validation.getViolations().size()
+                    + " violation(s):");
+            validation.getViolations().forEach(v -> log.accept("      - " + v));
+            log.accept("=== pipeline halted (model invalid) ===");
             return new Outcome(false, validation.getViolations(), null, 0);
         }
-        System.out.println("[2] validated : PASS (8 OCL rules + transitive cycle check)");
+        log.accept("[2] validated : PASS (8 OCL rules + transitive cycle check)");
 
         // 3. M2M transformation : architecture -> deployment topology.
         EObject topology =
@@ -118,21 +127,35 @@ public final class GenerationPipeline {
         Resource deploymentResource = loader.createResource(deploymentModel);
         deploymentResource.getContents().add(topology);
         deploymentResource.save(null);
-        System.out.println("[3] M2M (ATL) : " + projectRoot.relativize(deploymentModel));
+        log.accept("[3] M2M (ATL) : " + Emf.list(topology, "containers").size()
+                + " containers -> " + projectRoot.relativize(deploymentModel));
 
         // 4. M2T generation : docker-compose, Spring Boot services, OpenAPI specs.
         TraceabilityWriter trace = new TraceabilityWriter();
+        int mark = trace.size();
         new DockerComposeGenerator().generate(topology, generatedDir, trace);
+        logNewArtifacts(trace, mark, log);
+        mark = trace.size();
         new SpringBootGenerator().generate(architecture, generatedDir, trace);
+        logNewArtifacts(trace, mark, log);
+        mark = trace.size();
         new OpenApiGenerator().generate(architecture, generatedDir, trace);
+        logNewArtifacts(trace, mark, log);
 
         // 5. Traceability map.
         trace.write(generatedDir.resolve("traceability.json"),
                 projectRoot.relativize(modelFile).toString());
-        System.out.println("[4] M2T (MTL) : " + trace.size() + " artifacts in "
-                + projectRoot.relativize(generatedDir));
+        log.accept("[4] M2T (MTL) : " + trace.size() + " artifacts + traceability.json");
+        log.accept("=== pipeline complete (" + trace.size() + " artifacts) ===");
 
         return new Outcome(true, List.of(), deploymentModel, trace.size());
+    }
+
+    private static void logNewArtifacts(TraceabilityWriter trace, int from, Consumer<String> log) {
+        List<TraceabilityWriter.Entry> entries = trace.entries();
+        for (int i = from; i < entries.size(); i++) {
+            log.accept("      + " + entries.get(i).file());
+        }
     }
 
     /** Deletes the contents of a directory (kept), so a run leaves only its own output. */

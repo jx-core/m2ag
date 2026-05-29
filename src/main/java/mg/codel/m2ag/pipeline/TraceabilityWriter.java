@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +40,10 @@ public final class TraceabilityWriter {
 
     public int size() {
         return entries.size();
+    }
+
+    public List<Entry> entries() {
+        return Collections.unmodifiableList(entries);
     }
 
     public void write(Path file, String modelPath) throws IOException {

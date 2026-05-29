@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -96,6 +97,12 @@ public final class WebServer {
         send(ex, 200, "application/xml; charset=utf-8", Files.readAllBytes(model));
     }
 
+    /**
+     * Streams the run live. The body is a sequence of newline-terminated lines,
+     * each tagged by its first character: {@code 'L'} = a pipeline log line,
+     * {@code 'R'} = the final JSON result. The client renders {@code L} lines in
+     * a live console and parses the single {@code R} line as the result.
+     */
     private void handleRun(HttpExchange ex) throws IOException {
         if (!preflight(ex)) {
             return;
@@ -105,11 +112,33 @@ public final class WebServer {
             sendJson(ex, 400, "{\"error\":\"invalid or unknown model\"}");
             return;
         }
+        ex.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
+        ex.getResponseHeaders().set("Cache-Control", "no-cache");
+        ex.sendResponseHeaders(200, 0); // 0 => chunked, unknown length
+        OutputStream os = ex.getResponseBody();
+
+        Consumer<String> log = line -> emit(os, 'L', line);
         try {
-            GenerationPipeline.Outcome outcome = new GenerationPipeline().execute(root, model);
-            sendJson(ex, 200, buildRunResponse(model.getFileName().toString(), outcome));
+            GenerationPipeline.Outcome outcome = new GenerationPipeline().execute(root, model, log);
+            emit(os, 'R', buildRunResponse(model.getFileName().toString(), outcome));
         } catch (Exception e) {
-            sendJson(ex, 500, "{\"error\":" + Json.quote(String.valueOf(e.getMessage())) + "}");
+            emit(os, 'R', "{\"error\":" + Json.quote(String.valueOf(e.getMessage())) + "}");
+        } finally {
+            try {
+                os.close();
+            } catch (IOException ignored) {
+                // client may have disconnected
+            }
+        }
+    }
+
+    /** Writes one tagged, newline-terminated line and flushes so it streams live. */
+    private static void emit(OutputStream os, char tag, String payload) {
+        try {
+            os.write((tag + payload + "\n").getBytes(StandardCharsets.UTF_8));
+            os.flush();
+        } catch (IOException ignored) {
+            // client disconnected
         }
     }
 

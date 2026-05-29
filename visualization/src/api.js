@@ -40,15 +40,51 @@ export async function getModelXmi(name) {
     throw new Error(`Model "${name}" is unavailable (backend offline and not bundled).`);
 }
 
-export async function runPipeline(name) {
+/**
+ * Runs the pipeline, streaming live log lines to `onLog(line)` as they arrive,
+ * and resolving with the final result object. The server sends newline-tagged
+ * lines: 'L' = log line, 'R' = final JSON result.
+ */
+export async function runPipeline(name, onLog) {
     let r;
     try {
         r = await fetch(`/api/run?name=${encodeURIComponent(name)}`, { method: 'POST' });
     } catch {
         throw new Error('The M2AG backend is not running.');
     }
-    if (!r.ok) {
+    if (!r.ok || !r.body) {
         throw new Error(`Backend returned HTTP ${r.status}.`);
     }
-    return r.json();
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let result = null;
+
+    for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+            const line = buffer.slice(0, nl);
+            buffer = buffer.slice(nl + 1);
+            if (!line) {
+                continue;
+            }
+            const tag = line[0];
+            const rest = line.slice(1);
+            if (tag === 'L') {
+                onLog?.(rest);
+            } else if (tag === 'R') {
+                result = JSON.parse(rest);
+            }
+        }
+    }
+    if (!result) {
+        throw new Error('The server did not return a result.');
+    }
+    return result;
 }
