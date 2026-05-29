@@ -64,8 +64,11 @@ public final class GenerationPipeline {
         System.out.println("[1] loaded    : SystemArchitecture("
                 + Emf.str(architecture, "name") + ")");
 
-        // 2. OCL validation - halts the pipeline on any violation.
+        // 2. OCL validation - halts the pipeline on any violation. The report is
+        //    written whether validation passes or fails so IDE tooling can read it.
+        Files.createDirectories(generatedDir);
         ValidationResult validation = new ValidationEngine(architecture).validate();
+        Files.writeString(generatedDir.resolve("validation-report.json"), validation.toJson());
         if (!validation.isValid()) {
             System.err.println(validation);
             throw new PipelineException(
@@ -84,7 +87,6 @@ public final class GenerationPipeline {
         System.out.println("[3] M2M (ATL) : " + projectRoot.relativize(deploymentModel));
 
         // 4. M2T generation : docker-compose, Spring Boot services, OpenAPI specs.
-        Files.createDirectories(generatedDir);
         TraceabilityWriter trace = new TraceabilityWriter();
         new DockerComposeGenerator().generate(topology, generatedDir, trace);
         new SpringBootGenerator().generate(architecture, generatedDir, trace);

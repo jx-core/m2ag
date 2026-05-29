@@ -17,10 +17,16 @@ generated/
 .project
 .settings/
 bin/
+.metadata/
 
 # Visualization (Vite) build/install output
 visualization/node_modules/
 visualization/dist/
+
+# Theia/VS Code extension build/install output
+theia-extension/node_modules/
+theia-extension/out/
+*.vsix
 
 # Claude Code session-local backups (the hook resolves cwd-relative, so match
 # at any depth)

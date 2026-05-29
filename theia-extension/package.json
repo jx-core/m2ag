@@ -1,0 +1,77 @@
+{
+  "name": "m2ag-extension",
+  "displayName": "M²AG",
+  "description": "IDE shell integration for the M²AG model-driven pipeline (CDC phase 11). Runs the generation pipeline on a MicroserviceArchitecture XMI model, surfaces OCL violations as diagnostics, and shows the traceability map. Compatible with Eclipse Theia and VS Code.",
+  "version": "1.0.0",
+  "publisher": "mg-codel",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onView:m2agTraceability"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "m2ag.runPipeline",
+        "title": "M2AG: Generate from Model",
+        "icon": "$(play)"
+      },
+      {
+        "command": "m2ag.refreshTraceability",
+        "title": "M2AG: Refresh Traceability",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "m2ag.openGraph",
+        "title": "M2AG: Open Architecture Graph"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "m2ag.runPipeline",
+          "when": "resourceExtname == .xmi && resourceFilename =~ /^(?!.*-deployment).*/",
+          "group": "m2ag@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "m2ag.runPipeline",
+          "when": "resourceExtname == .xmi",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "m2ag.refreshTraceability",
+          "when": "view == m2agTraceability",
+          "group": "navigation"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "m2agTraceability",
+          "name": "M²AG Traceability"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.5.4"
+  }
+}

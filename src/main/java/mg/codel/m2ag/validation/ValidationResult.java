@@ -29,6 +29,28 @@ public final class ValidationResult {
         return Collections.unmodifiableList(violations);
     }
 
+    /** Machine-readable report consumed by the Theia/VS Code extension. */
+    public String toJson() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\n");
+        sb.append("  \"valid\": ").append(isValid()).append(",\n");
+        sb.append("  \"violations\": [\n");
+        for (int i = 0; i < violations.size(); i++) {
+            Violation v = violations.get(i);
+            sb.append("    {\"rule\": \"").append(esc(v.rule()))
+                    .append("\", \"elementId\": \"").append(esc(v.elementId()))
+                    .append("\", \"message\": \"").append(esc(v.message())).append("\"}")
+                    .append(i < violations.size() - 1 ? "," : "").append('\n');
+        }
+        sb.append("  ]\n");
+        sb.append("}\n");
+        return sb.toString();
+    }
+
+    private static String esc(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
     @Override
     public String toString() {
         if (isValid()) {
