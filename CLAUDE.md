@@ -5,12 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project State
 
 M²AG is an academic Model-Driven Engineering (MDE) project that generates executable
-microservice systems from abstract architectural models. **MVP phases 1–9 (CDC §15)
-and phase 10 (React Flow visualizer) are implemented and verified** — both reference
-models (`ecommerce.xmi`, `banking.xmi`) run end-to-end and produce a full `generated/`
-artifact set, and the visualizer in [visualization/](visualization/) renders the model
-graph in the browser. Phase 11 (Theia extension) and the rest of CDC §16 (Kubernetes /
-Kafka / etc.) are not started.
+microservice systems from abstract architectural models. **All 11 CDC phases are
+implemented and verified.** MVP phases 1–9 (§15) run end-to-end on both reference models
+(`ecommerce.xmi`, `banking.xmi`); phase 10 is the React Flow visualizer + unified web app
+in [visualization/](visualization/) backed by `mg.codel.m2ag.web.WebServer`; phase 11 is
+the VS Code / Theia extension in [theia-extension/](theia-extension/). The rest of CDC §16
+(Kubernetes / Kafka / GraphQL / service mesh) is not started.
+
+There are four ways to run the same pipeline: the CLI (`mvn exec:java`), the web app
+(`WebServer` + the React UI, no Eclipse), the IDE extension (`.vsix`), and Classic Eclipse
+for *authoring* the models (see [docs/ECLIPSE_GUIDE.md](docs/ECLIPSE_GUIDE.md)). The Java
+`GenerationPipeline.execute()` is the single shared code path behind the CLI and the web
+server.
 
 The thesis framing for all decisions: *"We transform abstract architectural models into
 executable distributed systems — not code, models."*
@@ -107,6 +113,26 @@ cd visualization && npm install && npm run dev    # http://localhost:5173
 
 It parses XMI client-side (DOMParser, no derived JSON) so the view stays a thin
 projection of the M1 model. `visualization/{node_modules,dist}/` are gitignored.
+
+The unified web app adds a backend that runs the real pipeline:
+
+```bash
+cd visualization && npm run build                                  # build UI once
+mvn exec:java -Dexec.mainClass=mg.codel.m2ag.web.WebServer         # http://localhost:8080
+```
+
+`WebServer` (JDK `com.sun.net.httpserver`, no new deps) serves the built UI and exposes
+`/api/{models,model,run}`; `/api/run` calls `GenerationPipeline.execute()`. `execute()`
+clears `generated/` each run and always writes `generated/validation-report.json` (the IDE
+extension and web UI read it).
+
+The IDE extension lives in `theia-extension/` (TypeScript, VS Code/Theia API):
+
+```bash
+cd theia-extension && npm install && npm run compile && npx @vscode/vsce package
+```
+
+`theia-extension/{node_modules,out}/` and `*.vsix` are gitignored.
 
 ## Toolchain Workflow
 
